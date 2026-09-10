@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>orphan-clean — Polyglot Dependency Auditor & Safe Orphan Cleaner</title>
+  <meta name="description" content="Safely audit polyglot project dependencies, purge orphan packages, and reclaim gigabytes of build bloat across Python, Node, Rust, and Flutter. Zero-risk rollbacks & native desktop GUI.">
+  <meta name="keywords" content="python, dependency manager, orphan cleaner, disk cleanup, rust target, flutter build, developer tools, sbom">
+  
+  <!-- OpenGraph / Social Meta -->
+  <meta property="og:title" content="orphan-clean — Polyglot Dependency Auditor & Safe Orphan Cleaner">
+  <meta property="og:description" content="Safely audit polyglot project dependencies, purge orphan packages, and reclaim gigabytes of build bloat with zero-risk rollbacks.">
+  <meta property="og:image" content="assets/icon.png">
+  <meta property="og:url" content="https://VaalRL.github.io/orphan-clean/">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #080c14;
+      --bg-alt: #0d1322;
+      --card-bg: rgba(16, 23, 38, 0.75);
+      --card-border: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --coffee: #fbbf24;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 20% 15%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 25%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+    }
+
+    /* Container */
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+    /* Sticky Navbar */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(16px);
+      background: rgba(8, 12, 20, 0.85);
+      border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+    }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 72px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    .brand img { width: 38px; height: 38px; border-radius: 9px; box-shadow: 0 0 16px var(--emerald-glow); }
+    .brand-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #10b981, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .brand-tag { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #1e293b; color: var(--cyan); border: 1px solid #334155; font-weight: 600; }
+
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      text-decoration: none; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+    }
+    .btn-secondary { background: #1e293b; color: var(--text); border-color: #334155; }
+    .btn-secondary:hover { background: #334155; }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff; box-shadow: 0 4px 20px var(--emerald-glow);
+    }
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-coffee {
+      background: linear-gradient(135deg, #FFDD00, #FBBF24);
+      color: #000; font-weight: 700; box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+    }
+    .btn-coffee:hover { opacity: 0.95; transform: translateY(-1px); }
+
+    /* Hero Section */
+    .hero {
+      padding: 88px 0 64px; text-align: center;
+      position: relative;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399; font-size: 13px; font-weight: 600; margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: 54px; font-weight: 800; line-height: 1.15; letter-spacing: -1.5px;
+      margin-bottom: 20px;
+    }
+    .hero h1 span.gradient {
+      background: linear-gradient(135deg, #34d399 0%, #22d3ee 50%, #38bdf8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 19px; color: var(--text-muted); max-width: 720px; margin: 0 auto 36px;
+      font-weight: 400; line-height: 1.6;
+    }
+    .hero-cta {
+      display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;
+      margin-bottom: 56px;
+    }
+    .hero-cta .btn { padding: 13px 26px; font-size: 15px; border-radius: 10px; }
+
+    /* Window Mockup */
+    .mockup-window {
+      max-width: 980px; margin: 0 auto;
+      background: #0f172a; border: 1px solid #334155; border-radius: 14px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(16, 185, 129, 0.15);
+      overflow: hidden; text-align: left;
+    }
+    .window-header {
+      background: #1e293b; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #334155;
+    }
+    .window-dots { display: flex; gap: 7px; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+    .window-title { font-size: 12px; font-family: var(--font-mono); color: var(--text-muted); }
+    .window-body {
+      padding: 24px; font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
+      color: #e2e8f0; overflow-x: auto; background: #0b1120;
+    }
+    .c-green { color: #34d399; }
+    .c-cyan { color: #38bdf8; }
+    .c-yellow { color: #fbbf24; }
+    .c-red { color: #f87171; }
+    .c-muted { color: #64748b; }
+
+    /* Features Section */
+    .section { padding: 96px 0; }
+    .section-head { text-align: center; margin-bottom: 56px; }
+    .section-tag { color: var(--cyan); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .section-title { font-size: 34px; font-weight: 800; letter-spacing: -0.8px; margin-bottom: 14px; }
+    .section-desc { color: var(--text-muted); font-size: 16px; max-width: 620px; margin: 0 auto; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 14px; padding: 28px; backdrop-filter: blur(10px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card:hover { transform: translateY(-3px); border-color: rgba(16, 185, 129, 0.4); }
+    .card-icon {
+      width: 44px; height: 44px; border-radius: 10px; background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center;
+      color: var(--emerald); font-size: 20px; margin-bottom: 18px;
+    }
+    .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+    /* Table Section */
+    .compare-table {
+      width: 100%; border-collapse: collapse; margin-top: 32px;
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden;
+    }
+    .compare-table th, .compare-table td { padding: 16px 20px; text-align: left; font-size: 14px; border-bottom: 1px solid #1e293b; }
+    .compare-table th { background: #0e1526; color: var(--text-muted); font-weight: 600; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .tag-check { color: var(--emerald); font-weight: 700; }
+    .tag-cross { color: var(--rose); font-weight: 700; }
+
+    /* Quickstart Tabs */
+    .tabs-wrapper {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px;
+      padding: 24px; max-width: 820px; margin: 0 auto;
+    }
+    .tab-buttons { display: flex; gap: 8px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; margin-bottom: 20px; }
+    .t-btn {
+      padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      background: transparent; color: var(--text-muted); border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .t-btn.active { background: #1e293b; color: var(--emerald); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .code-block {
+      background: #080d18; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 16px; font-family: var(--font-mono); font-size: 13px; color: #38bdf8;
+      display: flex; align-items: center; justify-content: space-between; overflow-x: auto;
+    }
+
+    /* Sponsor Box */
+    .sponsor-card {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 16px; padding: 48px 32px;
+      text-align: center; max-width: 800px; margin: 0 auto;
+    }
+    .sponsor-card h2 { font-size: 28px; font-weight: 800; margin-bottom: 14px; }
+    .sponsor-card p { color: var(--text-muted); font-size: 15px; margin-bottom: 28px; max-width: 580px; margin-left: auto; margin-right: auto; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border); padding: 48px 0; background: #070a12;
+      font-size: 13px; color: var(--text-muted);
+    }
+    .footer-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; }
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 36px; }
+      .nav-links { display: none; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .compare-table { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="container nav">
+      <a href="#" class="brand">
+        <img src="assets/icon_64.png" alt="Logo">
+        <div>
+          <span class="brand-title">orphan-clean</span>
+          <span class="brand-tag">v1.0.0</span>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="#features">特色亮點</a>
+        <a href="#safety">三層安全防禦</a>
+        <a href="#bloat">磁碟瘦身</a>
+        <a href="#quickstart">快速上手</a>
+        <a href="#sponsor">支持贊助</a>
+      </div>
+      <div class="nav-actions">
+        <a href="https://www.buymeacoffee.com/whoami885" target="_blank" class="btn btn-coffee" title="Support whoami885@gmail.com">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.216 6.415l-.132-.666c-.119-.597-.384-1.157-.775-1.635-.39-.477-.893-.847-1.468-1.077-.574-.23-1.196-.328-1.815-.285-.618.043-1.218.225-1.751.531l-.275.158c-.689-.472-1.492-.78-2.338-.898-.846-.118-1.71-.051-2.523.197-.813.247-1.564.675-2.192 1.25-.628.574-1.099 1.29-1.376 2.09-.276.799-.364 1.65-.257 2.484.107.834.408 1.63.88 2.324l.067.098c-.288.756-.408 1.569-.352 2.378.056.809.288 1.593.68 2.292.392.698.932 1.293 1.58 1.74.647.447 1.385.744 2.158.87v2.083c0 .53.211 1.039.586 1.414.375.375.884.586 1.414.586h4c.53 0 1.039-.211 1.414-.586.375-.375.586-.884.586-1.414v-2.083c.773-.126 1.511-.423 2.158-.87.648-.447 1.188-1.042 1.58-1.74.392-.699.624-1.483.68-2.292.056-.809-.064-1.622-.352-2.378l.067-.098c.472-.694.773-1.49.88-2.324.107-.834.019-1.685-.257-2.484-.277-.8-.748-1.516-1.376-2.09-.628-.575-1.379-1.003-2.192-1.25-.813-.248-1.677-.315-2.523-.197-.846.118-1.649.426-2.338.898l-.275-.158c-.533-.306-1.133-.488-1.751-.531-.619-.043-1.241.055-1.815.285-.575.23-1.078.6-1.468 1.077-.391.478-.656 1.038-.775 1.635l-.132.666c-.198.995-.084 2.028.324 2.955.408.927 1.084 1.7 1.936 2.213-.298.81-.39 1.68-.268 2.53.122.85.457 1.654.975 2.336.518.682 1.196 1.22 1.972 1.564.776.344 1.628.498 2.478.448v.952c0 .265.105.52.293.707.187.188.442.293.707.293h4c.265 0 .52-.105.707-.293.188-.187.293-.442.293-.707v-.952c.85.05 1.702-.104 2.478-.448.776-.344 1.454-.882 1.972-1.564.518-.682.853-1.486.975-2.336.122-.85.03-1.72-.268-2.53.852-.513 1.528-1.286 1.936-2.213.408-.927.522-1.96.324-2.955z"/></svg>
+          Buy Coffee
+        </a>
+        <a href="https://github.com/VaalRL/orphan-clean" target="_blank" class="btn btn-secondary">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="pill">
+        <span>🚀</span> v1.0.0 正式發布 • 獨立原生桌面視窗 ＋ 終端 CLI
+      </div>
+      <h1>
+        徹底掃除孤兒套件。<br>
+        找回 <span class="gradient">數十 GB</span> 磁碟空間。
+      </h1>
+      <p>
+        專為多語言開發者打造的跨專案依賴審計與磁碟贅肉清道夫。支援 Python、Node.js、Rust 與 Flutter，具備 DAG 傳遞依賴閉包、三層核心安全鎖定與自動快照回滾保單。
+      </p>
+
+      <div class="hero-cta">
+        <a href="https://github.com/VaalRL/orphan-clean/releases" target="_blank" class="btn btn-primary">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+          下載 Windows 原生執行檔 (.exe)
+        </a>
+        <a href="https://github.com/VaalRL/orphan-clean" target="_blank" class="btn btn-secondary">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          在 GitHub 給顆星星 Star
+        </a>
+      </div>
+
+      <!-- Mockup Window -->
+      <div class="mockup-window">
+        <div class="window-header">
+          <div class="window-dots">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
+          </div>
+          <div class="window-title">orphan-clean v1.0.0 — Native Terminal & GUI Engine</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="window-body">
+          <span class="c-muted">PS C:\Dev></span> <span class="c-green">orphan-clean</span> "C:\Users\Developer\Projects" --orphans<br>
+          <span class="c-cyan">[*] Auditing workspace: 225 projects discovered in 0.9s</span><br>
+          <span class="c-muted">============================================================</span><br>
+          <span class="c-yellow">  ORPHAN PACKAGES AUDIT & CLASSIFICATION REPORT</span><br>
+          <span class="c-muted">============================================================</span><br>
+          Total Installed Python Packages : 197<br>
+          Declared in Scanned Projects    : 58<br>
+          Active or Transitive (In-Use)   : 92 <span class="c-muted">(via DAG closure)</span><br>
+          Unreferenced Candidates         : 105<br><br>
+          <span class="c-red">--- [Tier 1: Core System Packages (FORBIDDEN from uninstallation)] (16) ---</span><br>
+          &nbsp;&nbsp;<span class="c-red">[LOCKED]</span> pip, setuptools, pywin32, pydantic, mcp, ipykernel, certifi...<br><br>
+          <span class="c-yellow">--- [Tier 2: Developer Tooling & CLI Utilities (Review Advised)] (25) ---</span><br>
+          &nbsp;&nbsp;<span class="c-yellow">[TOOL]</span>   black, flake8, pytest, ruff, twine, pyinstaller, pipdeptree...<br><br>
+          <span class="c-green">--- [Tier 3: Pure Isolated Libraries (Safe to Clean)] (64) ---</span><br>
+          &nbsp;&nbsp;<span class="c-green">[CLEAN]</span>  brotli, cffi, filetype, markdown2, mistune, nltk, pypdfium2...<br><br>
+          <span class="c-cyan">[+] Reclaimable Build Bloat: 28.4 GB (Rust target/ & Flutter build/)</span><br>
+          <span class="c-green">[+] Safety Guarantee: pip freeze automatic rollback snapshot created!</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="section" style="background: var(--bg-alt);">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-tag">Powerful Architecture</div>
+        <h2 class="section-title">告別套件垃圾堆，拒絕誤刪與黑心腳本</h2>
+        <p class="section-desc">我們解決了過去十年開源社群一直無法解決的「跨專案依賴審計」與「安全卸載防呆」痛點。</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon">🌳</div>
+          <h3>DAG 傳遞依賴閉包求解</h3>
+          <p>徹底告別誤判！專案若宣告 <code>pandas</code>，系統會沿著依賴有向無環圖自動保護底層的 <code>numpy</code> 與 <code>pytz</code>，絕不誤當成孤兒套件。</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🛡️</div>
+          <h3>三層安全防禦白名單</h3>
+          <p>獨創防呆分流機制：系統核心套件（Tier 1）永遠鎖定禁止移除；CLI 工具（Tier 2）獨立審閱；唯有純庫（Tier 3）才允許安全清理。</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">💾</div>
+          <h3>一鍵快照自動備份保單</h3>
+          <p>任何卸載操作前，強制在背景透過 <code>pip freeze</code> 生成包含時間戳記的還原快照，隨時提供一鍵無痛回滾。</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🪟</div>
+          <h3>100% 原生獨立桌面視窗</h3>
+          <p>採用微軟官方 WebView2 視窗容器技術。完全不打開瀏覽器分頁、無網址列、無多餘雜項，關閉視窗即隨開隨關。</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🚀</div>
+          <h3>數十 GB 編譯贅肉大瘦身</h3>
+          <p>不只管 Python！一鍵深度掃描 Rust 的 <code>target/</code> 與 Flutter 的 <code>build/</code> 暫存檔，單次通常能找回 20GB ~ 50GB 以上的寶貴硬碟空間。</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <h3>零外部重型依賴架構</h3>
+          <p>核心 100% 依賴 Python 內建標準庫，無需安裝 Node.js，單檔 <code>orphan-clean.exe</code> 僅 13MB，隨插即用。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Safety Comparison Section -->
+  <section id="safety" class="section">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-tag">Safety First</div>
+        <h2 class="section-title">為什麼不該使用暴力清理工具？</h2>
+        <p class="section-desc">比對 orphan-clean 與傳統清理方式的安全性差異：</p>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>核心能力與安全防護指標</th>
+              <th>傳統 pip-autoremove</th>
+              <th>一般磁碟清理器 (CCleaner等)</th>
+              <th style="color: var(--emerald);">orphan-clean (本專案)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>跨專案全景掃描</strong></td>
+              <td><span class="tag-cross">❌ 僅限單一指定套件</span></td>
+              <td><span class="tag-cross">❌ 完全看不懂程式碼依賴</span></td>
+              <td><span class="tag-check">✅ 自動遞迴掃描硬碟數百個專案</span></td>
+            </tr>
+            <tr>
+              <td><strong>系統核心套件強制鎖定 (Tier 1)</strong></td>
+              <td><span class="tag-cross">❌ 易誤刪 pip / pywin32</span></td>
+              <td><span class="tag-cross">❌ 暴力全殺，常毀損 Python 環境</span></td>
+              <td><span class="tag-check">✅ 永久安全鎖定核心 (禁止刪除)</span></td>
+            </tr>
+            <tr>
+              <td><strong>DAG 傳遞依賴安全閉包</strong></td>
+              <td><span class="tag-cross">❌ 無跨專案全域圖譜</span></td>
+              <td><span class="tag-cross">❌ 無</span></td>
+              <td><span class="tag-check">✅ 遞迴閉包求解，零誤殺</span></td>
+            </tr>
+            <tr>
+              <td><strong>卸載前自動快照備份保單</strong></td>
+              <td><span class="tag-cross">❌ 無備份直接刪除</span></td>
+              <td><span class="tag-cross">❌ 刪了就消失</span></td>
+              <td><span class="tag-check">✅ 自動產生 pip freeze 回滾保單</span></td>
+            </tr>
+            <tr>
+              <td><strong>Rust / Flutter 編譯贅肉掃描</strong></td>
+              <td><span class="tag-cross">❌ 不支援</span></td>
+              <td><span class="tag-cross">❌ 常遺漏或權限報錯</span></td>
+              <td><span class="tag-check">✅ 支援 target/ 與 build/ 清理</span></td>
+            </tr>
+            <tr>
+              <td><strong>純原生桌面視窗 ＋ 終端 CLI</strong></td>
+              <td><span class="tag-cross">❌ 僅純 CLI</span></td>
+              <td><span class="tag-cross">❌ 充滿廣告</span></td>
+              <td><span class="tag-check">✅ 免費開源、極致純淨、原生視窗</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quickstart Section -->
+  <section id="quickstart" class="section" style="background: var(--bg-alt);">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-tag">Quick Start</div>
+        <h2 class="section-title">一分鐘開箱即用</h2>
+        <p class="section-desc">選擇您最喜歡的方式啟動 orphan-clean：</p>
+      </div>
+
+      <div class="tabs-wrapper">
+        <div class="tab-buttons">
+          <button class="t-btn active" onclick="switchTab('tab-exe', this)">1. Windows 原生執行檔 (推薦)</button>
+          <button class="t-btn" onclick="switchTab('tab-cli', this)">2. Python 模組直接執行</button>
+          <button class="t-btn" onclick="switchTab('tab-git', this)">3. Git 開源原始碼</button>
+        </div>
+
+        <div id="tab-exe" class="tab-panel active">
+          <p style="color: var(--text-muted); margin-bottom: 12px; font-size: 14px;">下載免安裝單一執行檔，隨插即用（免安裝 Python 亦可運行）：</p>
+          <div class="code-block">
+            <span>https://github.com/VaalRL/orphan-clean/releases/latest/download/orphan-clean.exe</span>
+          </div>
+          <p style="font-size: 13px; color: var(--emerald); margin-top: 10px;">👉 雙擊 <code>orphan-clean.exe</code> 即可秒開純原生深色控制台！</p>
+        </div>
+
+        <div id="tab-cli" class="tab-panel">
+          <p style="color: var(--text-muted); margin-bottom: 12px; font-size: 14px;">在命令列中直接透過 Python 審計並清理：</p>
+          <div class="code-block">
+            <span>python -m orphanclean.cli "C:\\Users\\User\\Downloads\\Git" --orphans</span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 10px;">亦可啟動原生桌面視窗：<code>python -m orphanclean.gui</code></p>
+        </div>
+
+        <div id="tab-git" class="tab-panel">
+          <p style="color: var(--text-muted); margin-bottom: 12px; font-size: 14px;">從 GitHub 克隆並體驗最新功能：</p>
+          <div class="code-block">
+            <span>git clone https://github.com/VaalRL/orphan-clean.git</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sponsorship Section -->
+  <section id="sponsor" class="section">
+    <div class="container">
+      <div class="sponsor-card">
+        <div style="font-size: 44px; margin-bottom: 16px;">☕</div>
+        <h2>支持與贊助 orphan-clean</h2>
+        <p>
+          如果 <strong>orphan-clean</strong> 幫您解決了全域套件的陳年混亂、找回了硬碟中數十 GB 的空間，歡迎請作者喝杯咖啡支持持續維護！您的鼓勵是我們維護開源與擴展更多語言生態的最大動力。
+        </p>
+        <div>
+          <a href="https://www.buymeacoffee.com/whoami885" target="_blank" class="btn btn-coffee" style="padding: 14px 28px; font-size: 16px;">
+            <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" style="width: 20px; height: 20px;">
+            Buy Me a Coffee (whoami885)
+          </a>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 18px;">
+          聯絡與贊助信箱：<code>whoami885@gmail.com</code>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-content">
+      <div>
+        <strong>orphan-clean</strong> &bull; Released under the <a href="https://github.com/VaalRL/orphan-clean/blob/main/LICENSE" target="_blank" style="color: var(--cyan); text-decoration: none;">MIT License</a>.
+        <div style="font-size: 12px; margin-top: 4px; color: #64748b;">
+          Copyright &copy; 2026 Knowledge-trend-research (whoami885@gmail.com). All rights reserved.
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/VaalRL/orphan-clean" target="_blank">GitHub</a>
+        <a href="https://github.com/VaalRL/orphan-clean/issues" target="_blank">Issues</a>
+        <a href="https://www.buymeacoffee.com/whoami885" target="_blank">Sponsor</a>
+        <a href="https://github.com/VaalRL/orphan-clean/blob/main/LICENSE" target="_blank">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

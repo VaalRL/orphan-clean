@@ -125,7 +125,7 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </div>
     <div style="display: flex; align-items: center; gap: 10px;">
-      <a href="https://opensource.org/licenses/MIT" target="_blank" class="btn" style="text-decoration:none; font-size: 12px; color: #94a3b8; border-color: #334155;" title="Open Source License">
+      <a href="https://github.com/VaalRL/orphan-clean/blob/main/LICENSE" target="_blank" class="btn" style="text-decoration:none; font-size: 12px; color: #94a3b8; border-color: #334155;" title="View MIT License on GitHub">
         ⚖️ MIT License
       </a>
       <a href="https://www.buymeacoffee.com/whoami885" target="_blank" class="btn" style="background: linear-gradient(135deg, #FFDD00, #FBBF24); color: #000; font-weight: 700; border: none; text-decoration: none; box-shadow: 0 0 12px rgba(251, 191, 36, 0.35);" title="Buy me a coffee (whoami885@gmail.com)">
@@ -558,7 +558,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
   <footer style="margin-top: 40px; padding: 20px 0; border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; gap: 12px;">
     <div>
-      <strong>orphan-clean</strong> v1.0.0 &bull; Released under the <a href="https://opensource.org/licenses/MIT" target="_blank" style="color: var(--cyan); text-decoration: none; font-weight: 600;">MIT License</a>.
+      <strong>orphan-clean</strong> v1.0.0 &bull; Released under the <a href="https://github.com/VaalRL/orphan-clean/blob/main/LICENSE" target="_blank" style="color: var(--cyan); text-decoration: none; font-weight: 600;">MIT License</a>.
     </div>
     <div style="display: flex; align-items: center; gap: 14px;">
       <span>喜歡這個工具嗎？</span>
