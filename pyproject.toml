@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orphan-clean"
+version = "1.0.0"
+authors = [
+  { name="Knowledge-trend-research", email="whoami885@gmail.com" }
+]
+description = "Safely audit polyglot project dependencies, purge orphan packages, and reclaim gigabytes of build bloat."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = []
+
+[project.optional-dependencies]
+semver = ["packaging>=20.0"]
+
+[project.scripts]
+orphan-clean = "orphanclean.cli:main"
+oc = "orphanclean.cli:main"
