@@ -30,5 +30,6 @@ oc = "orphanclean.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/VaalRL/orphan-clean"
+Documentation = "https://vaalrl.github.io/orphan-clean"
 Repository = "https://github.com/VaalRL/orphan-clean"
 Issues = "https://github.com/VaalRL/orphan-clean/issues"
