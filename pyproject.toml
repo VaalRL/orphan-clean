@@ -27,3 +27,8 @@ semver = ["packaging>=20.0"]
 [project.scripts]
 orphan-clean = "orphanclean.cli:main"
 oc = "orphanclean.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/VaalRL/orphan-clean"
+Repository = "https://github.com/VaalRL/orphan-clean"
+Issues = "https://github.com/VaalRL/orphan-clean/issues"
